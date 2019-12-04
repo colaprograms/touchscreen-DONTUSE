@@ -3,6 +3,13 @@ body {
   color: #CCC;
 }
 
+/* prevent the user from selecting text
+ * (usually not what you want for a kiosk) */
+
+* {
+  -webkit-user-select: none;
+}
+
 #nav {
   height: 100%;
   width: 250px;
