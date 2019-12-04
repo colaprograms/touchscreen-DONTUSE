@@ -15,5 +15,7 @@
       `b${rn}`;
   }
 
-)();
+  window.random_rec = random_rec;
+  window.recordurl = recordurl;
+})();
 

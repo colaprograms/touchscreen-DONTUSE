@@ -27,4 +27,13 @@ body {
   font-size: 200%;
 }
 
+#body {
+  margin-left: 290px;
+  padding: 40px;
+}
+
+#bodydraw {
+  width: 100%;
+  height: 100%;
+}
 
