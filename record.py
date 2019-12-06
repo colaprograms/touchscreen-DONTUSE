@@ -10,17 +10,8 @@ def randomurl():
   return URL % random.randint(RN_LOW, RN_HIGH)
 
 def remove_some_styling(tag):
-  for z in tag.select("strong"):
+  for z in tag.select("strong,a"):
     z.unwrap()
-
-def one_child(entry):
-  names = entry.select(".bibInfoLabel")
-  count = len(names)
-  if count == 0:
-    return # this one is empty maybe?
-  if count > 1:
-    raise Exception("more than one bibInfoLabel")
-  name = names[0]
 
 def getrec():
   try:
@@ -34,13 +25,30 @@ def getrec():
   try:
     soup = BeautifulSoup(req.read(), 'html.parser')
     fiel = {}
-    for z in fiel.select(".bibInfoEntry"):
+    for z in soup.select(".bibInfoEntry"):
+      out = [None, []]
+      def eject():
+        if out[0] is not None:
+          fiel[out[0]] = out[1]
+          out[:] = [None, []]
+      def joinstrs(st):
+          return "".join(str(_).strip() for _ in st)
       remove_some_styling(z)
-      name = get_name_from_entry(z)
-      name = name.string
-      datas = z.select(".bibInfoData")
-
+      stuf = z.select(".bibInfoLabel,.bibInfoData")
+      print(stuf)
+      for what in stuf:
+        if "bibInfoLabel" in what['class']:
+          eject()
+          out[0] = joinstrs(what.contents)
+          pass
+          pass
+        elif "bibInfoData" in what['class']:
+          out[1] += [joinstrs(what.contents)]
+        else:
+          print(what['class'])
+      eject()
   except Exception as e:
+    raise e
     return {
       'code': 200,
       'fields': fiel,

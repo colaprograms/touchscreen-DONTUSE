@@ -5,8 +5,6 @@ from record import getrec
 import re
 import json
 
-PATH = "/home/cola/Downloads/touchscreen"
-
 FILE_NOT_FOUND_MESSAGE = b"File not found"
 
 INDEXTXT = """<!doctype html>
