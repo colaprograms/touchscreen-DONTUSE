@@ -1,10 +1,11 @@
-import urllib, urllib.request
-import random
+import urllib, urllib.request, json
 from bs4 import BeautifulSoup
-import json
+import random, traceback
 
 RN_LOW = 1000001
+ 
 RN_HIGH = 3835994
+
 def randomurl():
   URL = "https://mercury.concordia.ca/search/?searchtype=.&searcharg=b%07d"
   return URL % random.randint(RN_LOW, RN_HIGH)
@@ -18,18 +19,16 @@ def getrec():
     req = urllib.request.urlopen( randomurl() )
   except urllib.error.HTTPError as e:
     return {
-      'code': e.code,
-      'reason': e.reason,
-      'headers': e.headers
+      'error': ["http", e.code, e.reason, e.headers]
     }
   try:
     soup = BeautifulSoup(req.read(), 'html.parser')
-    fiel = {}
+    fiel = []
     for z in soup.select(".bibInfoEntry"):
       out = [None, []]
       def eject():
         if out[0] is not None:
-          fiel[out[0]] = out[1]
+          fiel.append((out[0], out[1]))
           out[:] = [None, []]
       def joinstrs(st):
           return "".join(str(_).strip() for _ in st)
@@ -48,14 +47,6 @@ def getrec():
           print(what['class'])
       eject()
   except Exception as e:
-    raise e
-    return {
-      'code': 200,
-      'fields': fiel,
-      'error': repr(e)
-    }
-  return {
-    'code': req.getcode(),
-    'fields': fiel,
-    'error': None
-  }
+    traceback.print_exc()
+    return { 'error': ["parsing", traceback.format_exc()] }
+  return { 'error': None, fields: fiel }

@@ -16,7 +16,7 @@ INDEXTXT = """<!doctype html>
               This is a server for pulling random books from the Concordia Library website.
               <br />
               <br />
-              /getrandom returns JSON
+              /getrecord returns JSON
             </body>
           </html>
         """
