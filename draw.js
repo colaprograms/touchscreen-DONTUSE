@@ -2,11 +2,34 @@
 
 let emptydiv = function(id) { return `<div id="${id}"></div>`; }
 
+var lcars_count = 0;
+
+var LCARS_LIMIT = 20;
+
+let add_lcars_reference = function(text) {
+  let lcarslist = $("#lcarslist");
+
+  lcars_count++
+  if(lcars_count > LCARS_LIMIT)
+    lcarslist.children().last().remove();
+
+  lcarslist.children().first().removeClass("lcarscurren");
+
+  let lcarsnew = $(`<div class='lcarsoutput'></div>`);
+  lcarsnew.text(text)
+
+  lcarsnew.addClass("lcarscurren");
+  
+  lcarslist.prepend(lcarsnew);
+}
+
+
 let makenav = function() {
   let navigation = $("#nav");
-  let navtext = "Random book display";
+  let navtext = "RANDOM BOOK";
   navigation.html(`
     <div id="navheader">${navtext}</div>
+    <div id="lcarslist"></div>
   `);
 }
 
@@ -54,18 +77,24 @@ let set_book = function(data) {
       $("#bodydraw_json").text(JSON.stringify(data));
     }
   }
+  else if(data.fields.length == 0) {
+    retrysoon = true;
+    add_lcars_reference(`${data.recordnumber} [INVALID]`);
+  }
   else {
     $("#bodydraw").html("<div id='fields'></div>");
     let fields = $("#fields");
     data.fields.forEach(function(field, idx) {
+      console.log(field);
       let fieldob = $("<div class='field'></div>");
       fieldob.append(`<div class='fieldname'>${field[0]}</div>`);
       field[1].forEach(function(data, dataidx) {
         fieldob.append(`<div class='fielddata'>${data}</div>`);
       });
+      fields.append(fieldob)
     });
+    add_lcars_reference(`${data.recordnumber}`);
   }
-  $("#bodydraw").html("got successful response");
   console.log(data);
 }
 
@@ -75,27 +104,40 @@ let showtexterror = function(status) {
   `);
 }
 
+var retrysoon = false;
+var seconds = 999;
+var BOOKCHANGE_INTERVAL = 60;
+var RETRY_INTERVAL = 10;
+
 let bookchanger = function() {
-  let url = "http://localhost:9000/getrecord";
+  seconds++;
+
+  if(retrysoon)
+    timeout = RETRY_INTERVAL;
+  else
+    timeout = BOOKCHANGE_INTERVAL;
+  if(seconds < timeout)
+    return;
+
+  seconds = 0;
+
+  retrysoon = false;
+
+  let url = "/getrecord"; //let url = "http://localhost:9000/getrecord";
+
   console.log(`Loading ${url}`);
+
   let ajax =
     $.ajax(url)
-     .done(function(data) {
-       let json = JSON.parse(data);
-       set_book(json);
-     })
+     .done(function(data) { set_book(data) })
      .fail(function(jqxhr, status, error) {
       showtexterror(status);
      });
 };
 
-let BOOKCHANGE_INTERVAL = 60000; // one minute
-
 let bcstart = function() {
-  setInterval(
-    BOOKCHANGE_INTERVAL,
-    bookchanger
-  )
+  setTimeout(bookchanger, 0);
+  setInterval(bookchanger, 1000);
 };
 
 let start = function() {

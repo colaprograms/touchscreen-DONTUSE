@@ -8,7 +8,8 @@ RN_HIGH = 3835994
 
 def randomurl():
   URL = "https://mercury.concordia.ca/search/?searchtype=.&searcharg=b%07d"
-  return URL % random.randint(RN_LOW, RN_HIGH)
+  j = random.randint(RN_LOW, RN_HIGH)
+  return (URL % j, j)
 
 def remove_some_styling(tag):
   for z in tag.select("strong,a"):
@@ -16,13 +17,17 @@ def remove_some_styling(tag):
 
 def getrec():
   try:
-    req = urllib.request.urlopen( randomurl() )
+    uu, j = randomurl()
+    print("asked server for", uu)
+    req = urllib.request.urlopen( uu )
   except urllib.error.HTTPError as e:
     return {
       'error': ["http", e.code, e.reason, e.headers]
     }
   try:
-    soup = BeautifulSoup(req.read(), 'html.parser')
+    resp = req.read()
+    print(resp)
+    soup = BeautifulSoup(resp, 'html.parser')
     fiel = []
     for z in soup.select(".bibInfoEntry"):
       out = [None, []]
@@ -49,4 +54,4 @@ def getrec():
   except Exception as e:
     traceback.print_exc()
     return { 'error': ["parsing", traceback.format_exc()] }
-  return { 'error': None, fields: fiel }
+  return { 'error': None, 'fields': fiel, 'recordnumber': j }

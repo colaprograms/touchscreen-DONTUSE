@@ -1,6 +1,12 @@
 body {
   background-color: #000;
   color: #CCC;
+  font-family: "Swiss 911 Ultra Condensed";
+}
+
+@font-face {
+  font-family: "Swiss 911 Ultra Condensed";
+  src: url("/fonts/swiss-911.woff2") format("woff2");
 }
 
 /* prevent the user from selecting text
@@ -12,24 +18,40 @@ body {
 
 #nav {
   height: 100%;
-  width: 250px;
+  width: 112px;
   position: fixed;
   z-index: 1;
   top: 0;
   left: 0;
-  background-color: #422;
-  overflow-x: hidden;
-  padding: 60px 20px 20px 20px;
-  padding-top: 60px;
+  overflow: hidden;
+  padding: 0px 0px 20px 0px;
+  border-radius: 0 0% 20% 0;
+  clip-path: square(0 0 200px 200px);
 }
 
 #navheader {
+  padding: 20px 20px 20px 20px;
+  margin-bottom: 12px;
+  background-color: #422;
   font-size: 200%;
 }
 
+
+.lcarscurren {
+  color: #EEE;
+}
+
+#lcarslist {
+  background-color: #422;
+  padding: 10px 10px 10px 10px;
+  height: 100%;
+  width: 62px;
+  font-size: 70%;
+}
+
 #body {
-  margin-left: 290px;
-  padding: 40px;
+  margin-left: 160px;
+  padding: 20px;
 }
 
 #bodydraw {

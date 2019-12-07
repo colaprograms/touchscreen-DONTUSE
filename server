@@ -30,19 +30,31 @@ class Handler(BaseHTTPRequestHandler):
     path = self.path[1:]
     if path == "":
       path = "index.html"
-    match = re.match(r'^[-a-zA-Z0-9.,/]*$', path)
+    FILENAME = r'(?!\.)[-a-zA-Z0-9.,]+';
+    REGEX = "^" + FILENAME + "(?:/+" + FILENAME + ")*/*$"
+    match = re.match(REGEX, path)
     if match:
-      if path == "index.html":
-        buf = INDEXTXT
-        type = "text/html"
-      elif path == "getrecord":
+      if path == "getrecord":
         buf = json.dumps( getrec() )
         type = "application/json"
       else:
-        self.send_response(404)
-        self.end_headers()
-        self.wfile.write(FILE_NOT_FOUND_MESSAGE)
-        buf = None
+        try:
+          f = open(path, "rb")
+          buf = f.read()
+          f.close()
+          if endswith(path, ".js"):
+            type = "text/javascript"
+          elif endswith(path, ".css"):
+            type = "text/css"
+          elif endswith(path, ".ttf"):
+            type = "font/ttf"
+          else:
+            type = "text/html"
+        except FileNotFoundError:
+          self.send_response(404)
+          self.end_headers()
+          self.wfile.write(FILE_NOT_FOUND_MESSAGE)
+          buf = None
       if buf is not None:
         if isinstance(buf, str):
           buf = buf.encode()
@@ -53,5 +65,6 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(buf)
     print(self.path)
 
-httpd = HTTPServer(('localhost', 9000), Handler)
+#httpd = HTTPServer(('localhost', 9000), Handler)
+httpd = HTTPServer(('', 9000), Handler)
 httpd.serve_forever()
