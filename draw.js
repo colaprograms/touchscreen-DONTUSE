@@ -119,7 +119,7 @@ let showtexterror = function(status) {
 
 var retrysoon = false;
 var seconds = 999;
-var BOOKCHANGE_INTERVAL = 60;
+var BOOKCHANGE_INTERVAL = 600;
 var RETRY_INTERVAL = 10;
 
 let bookchanger = function() {
