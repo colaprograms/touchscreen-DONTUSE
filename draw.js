@@ -85,6 +85,7 @@ let set_book = function(data) {
     $("#bodydraw").html("<div id='fields'></div>");
     let fields = $("#fields");
     data.fields.forEach(function(field, idx) {
+      /*
       console.log(field);
       let fieldob = $("<div class='field'></div>");
       fieldob.append(`<div class='fieldname'>${field[0]}</div>`);
@@ -92,6 +93,18 @@ let set_book = function(data) {
         fieldob.append(`<div class='fielddata'>${data}</div>`);
       });
       fields.append(fieldob)
+      */
+      if(idx > 0) {
+        fields.append(`<div class='fieldspac'></div>`);
+      }
+      let name = field[0].replace(/\xa0/g, " ").toUpperCase();
+      console.log(name);
+      console.log(escape(name));
+      let fieldname = $(`<div class='fieldname'>${name}</div>`);
+      fields.append(fieldname);
+      field[1].forEach(function(data, dataidx) {
+        fields.append(`<div class='fielddata'>${data}</div>`);
+      });
     });
     add_lcars_reference(`${data.recordnumber}`);
   }

@@ -50,8 +50,26 @@ body {
 }
 
 #body {
-  margin-left: 160px;
+  margin-left: 121px;
   padding: 20px;
+}
+
+#fields {
+  display: grid;
+  grid-template-columns: 20% 6% auto;
+}
+
+.fieldspac {
+  grid-column: 1 / span 3;
+  height: 6px;
+}
+
+.fielddata {
+  grid-column: 3 / span 1;
+}
+
+.fieldname {
+  grid-column: 1 / span 1;
 }
 
 #bodydraw {
