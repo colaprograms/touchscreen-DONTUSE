@@ -84,6 +84,7 @@ let set_book = function(data) {
   else {
     $("#bodydraw").html("<div id='fields'></div>");
     let fields = $("#fields");
+    console.log(data);
     data.fields.forEach(function(field, idx) {
       /*
       console.log(field);
@@ -98,11 +99,11 @@ let set_book = function(data) {
         fields.append(`<div class='fieldspac'></div>`);
       }
       let name = field[0].replace(/\xa0/g, " ").toUpperCase();
-      console.log(name);
-      console.log(escape(name));
+      console.log("name:", name);
       let fieldname = $(`<div class='fieldname'>${name}</div>`);
       fields.append(fieldname);
       field[1].forEach(function(data, dataidx) {
+        console.log("data:", data);
         fields.append(`<div class='fielddata'>${data}</div>`);
       });
     });

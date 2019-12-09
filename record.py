@@ -30,6 +30,7 @@ def getrec():
     soup = BeautifulSoup(resp, 'html.parser')
     fiel = []
     for z in soup.select(".bibInfoEntry"):
+      print("here is the stuff we got:", z)
       out = [None, []]
       def eject():
         if out[0] is not None:
@@ -39,7 +40,6 @@ def getrec():
           return "".join(str(_).strip() for _ in st)
       remove_some_styling(z)
       stuf = z.select(".bibInfoLabel,.bibInfoData")
-      print(stuf)
       for what in stuf:
         if "bibInfoLabel" in what['class']:
           eject()
