@@ -25,7 +25,7 @@ body {
   left: 0;
   padding: 0px 0px 40px 0px;
   display: grid;
-  grid-template-columns: 49px 26px 160px;
+  grid-template-columns: 160px 26px 49px;
   grid-template-rows: min-content auto;
 }
 
@@ -57,11 +57,10 @@ body {
 }
 
 #lcarslist {
-  grid-column: 3 / span 1;
+  grid-column: 1 / span 1;
   background-color: #422;
-  padding: 10px 10px 18px 10px;
-  margin-right: 44px;
-  font-size: 60%;
+  padding: 20px 20px 20px 20px;
+  font-size: 70%;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -72,7 +71,7 @@ body {
 }
 
 #lcarslogo {
-  grid-column: 1 / span 1;
+  grid-column: 3 / span 1;
   background-color: #422;
   display: flex;
   flex-direction: column;
