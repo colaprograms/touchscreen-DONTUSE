@@ -43,7 +43,7 @@ let add_lcars_reference = function(text) {
   lcarslist.prepend(lcarsnew);
 
   $("#lcarslist").addClass("highlight");
-  set_lcars_highlight_timer(100);
+  set_lcars_highlight_timer(200);
 }
 
 
@@ -52,14 +52,10 @@ let makenav = function() {
   let navtext = "RANDOM BOOK";
   navigation.html(`
     <div id="navheader">${navtext}</div>
-    <div id="lcarspair">
-      <div id="lcarslist"></div>
-      <div id="lcarslogo">
-        <div id="lcarstext">
-          <div id="lcarstexu">
-            LIBRARY COMPUTER ACCESS/RETRIEVAL SYSTEM
-          </div>
-        </div>
+    <div id="lcarslist"></div>
+    <div id="lcarslogo">
+      <div id="lcarstext">
+          LIBRARY COMPUTER ACCESS/RETRIEVAL SYSTEM
       </div>
     </div>
   `);
