@@ -96,7 +96,6 @@ let set_book = function(data) {
    *   fields: [["dog", ["fantastic dog"]], ["frog", ["frog, tolerable"]]],
    * }
    */
-  set_already_requested_false();
   if(data.error) {
     if(data.error[0] == "http") {
       makeerror_http(data);
@@ -195,12 +194,36 @@ let bookchanger = function() {
   set_blinking(true);
   const URL = "/getrecord";
 
-  let ajax =
+  let ajax = function() {
     $.ajax(URL)
      .done(function(data) { set_book(data) })
      .fail(function(jqxhr, status, error) {
       showtexterror(status);
      });
+  };
+
+  let sandboxisopen = function() {
+    let d = new Date();
+    let w = d.getDay();
+    let h = d.getHours();
+
+    let isweekend = (w == 0) || (w == 6);
+    let isinhours = (h >= 10) && (h < 18);
+    return isinhours && !isweekend;
+  }
+
+  let wait_for_opening = function() {
+    if(sandboxisopen()) {
+      ajax();
+    }
+    else {
+      set_body_to_text(`Sandbox is closed, no random book for now`);
+      setTimeout(wait_for_opening, 60000);
+    }
+  };
+
+  /* allow it to blink for at least one second */
+  setTimeout(wait_for_opening, 600);
 };
 
 let bcstart = function() {
