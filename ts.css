@@ -29,6 +29,10 @@ body {
   clip-path: square(0 0 200px 200px);
 }
 
+#lcarslist.highlight {
+  background-color: #844;
+}
+
 #navheader {
   padding: 20px 20px 20px 20px;
   margin-bottom: 22px;
@@ -36,6 +40,16 @@ body {
   font-size: 200%;
 }
 
+#navheader.navheaderload {
+  animation: navheaderblink 1s linear 0s infinite;
+}
+
+@keyframes navheaderblink {
+  0% { background-color: #844; }
+  49% { background-color: #844; }
+  50% { background-color: #633; }
+  100% { background-color: #633; }
+}
 
 .lcarscurren {
   color: #EEE;
@@ -47,6 +61,22 @@ body {
   height: 100%;
   width: 62px;
   font-size: 70%;
+}
+
+#lcarslist.highlight {
+  background-color: #844;
+}
+
+#lcarslogo {
+  position: fixed;
+  left: 60px;
+  top: 20px;
+  background-color: #422;
+  transform: rotate(2deg);
+}
+
+#lcarslogo .text {
+  transform: rotate(90deg);
 }
 
 #body {

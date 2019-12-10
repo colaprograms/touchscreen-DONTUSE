@@ -6,6 +6,26 @@ var lcars_count = 0;
 
 var LCARS_LIMIT = 20;
 
+var lcars_highlight_timer = undefined;
+
+var set_lcars_highlight_timer = function(t) {
+  lcars_highlight_timer = performance.now() + t;
+  $("#lcarslist").addClass("highlight");
+  requestAnimationFrame(check_lcars_highlight_timer);
+}
+
+var check_lcars_highlight_timer = function() {
+  if(lcars_highlight_timer === undefined)
+    return;
+  if(performance.now() >= lcars_highlight_timer) {
+    $("#lcarslist").removeClass("highlight");
+    lcars_highlight_timer = undefined;
+  }
+  else {
+    requestAnimationFrame(check_lcars_highlight_timer);
+  }
+}
+
 let add_lcars_reference = function(text) {
   let lcarslist = $("#lcarslist");
 
@@ -21,6 +41,9 @@ let add_lcars_reference = function(text) {
   lcarsnew.addClass("lcarscurren");
   
   lcarslist.prepend(lcarsnew);
+
+  $("#lcarslist").addClass("highlight");
+  set_lcars_highlight_timer(100);
 }
 
 
@@ -30,7 +53,11 @@ let makenav = function() {
   navigation.html(`
     <div id="navheader">${navtext}</div>
     <div id="lcarslist"></div>
+    <div id="lcarslogo"><span class="text">LIBRARY COMPUTER ACCESS/RETRIEVAL SYSTEM</span></div>
   `);
+  $("#navheader").click(function(e) {
+    random_book_request();
+  });
 }
 
 let makebod = function() {
@@ -82,6 +109,7 @@ let set_book = function(data) {
     add_lcars_reference(`${data.recordnumber} [INVALID]`);
   }
   else {
+    set_blinking(false);
     $("#bodydraw").html("<div id='fields'></div>");
     let fields = $("#fields");
     console.log(data);
@@ -118,10 +146,34 @@ let showtexterror = function(status) {
   `);
 }
 
+const RELOAD_IMMEDIATELY = Infinity;
+const BOOKCHANGE_INTERVAL = 600;
+const RETRY_INTERVAL = 10;
 var retrysoon = false;
-var seconds = 999;
-var BOOKCHANGE_INTERVAL = 600;
-var RETRY_INTERVAL = 10;
+var seconds = Infinity;
+var blinking = false;
+
+var set_blinking = function(z) {
+  if(z) {
+    if(!blinking) {
+      $("#navheader").addClass("navheaderload");
+      blinking = true;
+    }
+  }
+  else {
+    if(blinking) {
+      $("#navheader").removeClass("navheaderload");
+      blinking = false;
+    }
+  }
+}
+
+let random_book_request = function() {
+  if(blinking === false) {
+    $("#navheader").addClass("navheaderload");
+    seconds = Infinity;
+  }
+}
 
 let bookchanger = function() {
   seconds++;
@@ -134,15 +186,12 @@ let bookchanger = function() {
     return;
 
   seconds = 0;
-
   retrysoon = false;
-
-  let url = "/getrecord"; //let url = "http://localhost:9000/getrecord";
-
-  console.log(`Loading ${url}`);
+  set_blinking(true);
+  const URL = "/getrecord";
 
   let ajax =
-    $.ajax(url)
+    $.ajax(URL)
      .done(function(data) { set_book(data) })
      .fail(function(jqxhr, status, error) {
       showtexterror(status);
