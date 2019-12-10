@@ -25,7 +25,6 @@ body {
   left: 0;
   overflow: hidden;
   padding: 0px 0px 20px 0px;
-  border-radius: 0 0% 20% 0;
   clip-path: square(0 0 200px 200px);
 }
 
@@ -55,7 +54,14 @@ body {
   color: #EEE;
 }
 
+#lcarspair {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 62px 13px auto;
+}
+
 #lcarslist {
+  grid-column: 1 / span 1;
   background-color: #422;
   padding: 10px 10px 10px 10px;
   height: 100%;
@@ -68,15 +74,24 @@ body {
 }
 
 #lcarslogo {
-  position: fixed;
-  left: 60px;
-  top: 20px;
+  margin-left: 20px;
+  grid-column: 3 / span 1;
   background-color: #422;
-  transform: rotate(2deg);
+  height: 100%;
 }
 
-#lcarslogo .text {
-  transform: rotate(90deg);
+#lcarstext {
+  height: 100%;
+  padding: 17em 0em 0em 0em;
+  font-size: 70%;
+  writing-mode: vertical-rl;
+}
+
+#lcarstexu {
+  height: 100%;
+  width: 100%;
+  padding: 0.8em 0.2em 0em 0.2em;
+  border-top: 3px solid black;
 }
 
 #body {
@@ -120,6 +135,6 @@ body {
 
 ::-webkit-scrollbar-thumb
 {
-    background-color: #822;
+    background-color: #422;
     border: 8px solid black;
 }

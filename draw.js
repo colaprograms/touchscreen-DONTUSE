@@ -52,8 +52,16 @@ let makenav = function() {
   let navtext = "RANDOM BOOK";
   navigation.html(`
     <div id="navheader">${navtext}</div>
-    <div id="lcarslist"></div>
-    <div id="lcarslogo"><span class="text">LIBRARY COMPUTER ACCESS/RETRIEVAL SYSTEM</span></div>
+    <div id="lcarspair">
+      <div id="lcarslist"></div>
+      <div id="lcarslogo">
+        <div id="lcarstext">
+          <div id="lcarstexu">
+            LIBRARY COMPUTER ACCESS/RETRIEVAL SYSTEM
+          </div>
+        </div>
+      </div>
+    </div>
   `);
   $("#navheader").click(function(e) {
     random_book_request();
