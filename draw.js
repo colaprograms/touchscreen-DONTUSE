@@ -6,6 +6,26 @@ var lcars_count = 0;
 
 var LCARS_LIMIT = 20;
 
+var lcars_highlight_timer = undefined;
+
+var set_lcars_highlight_timer = function(t) {
+  lcars_highlight_timer = performance.now() + t;
+  $("#lcarslist").addClass("highlight");
+  requestAnimationFrame(check_lcars_highlight_timer);
+}
+
+var check_lcars_highlight_timer = function() {
+  if(lcars_highlight_timer === undefined)
+    return;
+  if(performance.now() >= lcars_highlight_timer) {
+    $("#lcarslist").removeClass("highlight");
+    lcars_highlight_timer = undefined;
+  }
+  else {
+    requestAnimationFrame(check_lcars_highlight_timer);
+  }
+}
+
 let add_lcars_reference = function(text) {
   let lcarslist = $("#lcarslist");
 
@@ -21,6 +41,9 @@ let add_lcars_reference = function(text) {
   lcarsnew.addClass("lcarscurren");
   
   lcarslist.prepend(lcarsnew);
+
+  $("#lcarslist").addClass("highlight");
+  set_lcars_highlight_timer(200);
 }
 
 
@@ -30,9 +53,14 @@ let makenav = function() {
   navigation.html(`
     <div id="navheader">${navtext}</div>
     <div id="lcarslist"></div>
+    <div id="lcarslogo">
+      <div id="lcarstext">
+          LIBRARY COMPUTER ACCESS AND RETRIEVAL SYSTEM
+      </div>
+    </div>
   `);
   $("#navheader").click(function(e) {
-    request_new_book();
+    random_book_request();
   });
 }
 
@@ -86,6 +114,7 @@ let set_book = function(data) {
     add_lcars_reference(`${data.recordnumber} [INVALID]`);
   }
   else {
+    set_blinking(false);
     $("#bodydraw").html("<div id='fields'></div>");
     let fields = $("#fields");
     console.log(data);
@@ -122,22 +151,33 @@ let showtexterror = function(status) {
   `);
 }
 
+const RELOAD_IMMEDIATELY = Infinity;
+const BOOKCHANGE_INTERVAL = 600;
+const RETRY_INTERVAL = 10;
 var retrysoon = false;
-var BOOKCHANGE_INTERVAL = 600;
-var RETRY_INTERVAL = 10;
-var MANY_SECONDS = 999; // should be more than the other seconds values
-var seconds = MANY_SECONDS;
-var already_requested = false;
+var seconds = Infinity;
+var blinking = false;
 
-var set_already_requested_false = function() { already_requested = false; }
+var set_blinking = function(z) {
+  if(z) {
+    if(!blinking) {
+      $("#navheader").addClass("navheaderload");
+      blinking = true;
+    }
+  }
+  else {
+    if(blinking) {
+      $("#navheader").removeClass("navheaderload");
+      blinking = false;
+    }
+  }
+}
 
-let request_new_book = function() {
-  if(already_requested)
-    return;
-  already_requested = true;
-  $("#navheader").css("animation", "");
-  $("#navheader").css("animation", "navheaderflash 0.5s linear 1");
-  seconds = MANY_SECONDS;
+let random_book_request = function() {
+  if(blinking === false) {
+    $("#navheader").addClass("navheaderload");
+    seconds = Infinity;
+  }
 }
 
 let bookchanger = function() {
@@ -151,15 +191,12 @@ let bookchanger = function() {
     return;
 
   seconds = 0;
-
   retrysoon = false;
-
-  let url = "/getrecord"; //let url = "http://localhost:9000/getrecord";
-
-  console.log(`Loading ${url}`);
+  set_blinking(true);
+  const URL = "/getrecord";
 
   let ajax =
-    $.ajax(url)
+    $.ajax(URL)
      .done(function(data) { set_book(data) })
      .fail(function(jqxhr, status, error) {
       showtexterror(status);
