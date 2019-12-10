@@ -39,6 +39,7 @@ body {
   margin-bottom: 30px;
   background-color: #422;
   font-size: 200%;
+  border-radius: 0% 25% 0% 0%;
 }
 
 #navheader.navheaderload {
