@@ -52,12 +52,12 @@ let makenav = function() {
   let navtext = "RANDOM BOOK";
   navigation.html(`
     <div id="navheader">${navtext}</div>
-    <div id="lcarslist"></div>
     <div id="lcarslogo">
       <div id="lcarstext">
           LIBRARY COMPUTER ACCESS/RETRIEVAL SYSTEM
       </div>
     </div>
+    <div id="lcarslist"></div>
   `);
   $("#navheader").click(function(e) {
     random_book_request();
