@@ -55,7 +55,7 @@ let makenav = function() {
     <div id="lcarslist"></div>
     <div id="lcarslogo">
       <div id="lcarstext">
-          LIBRARY COMPUTER ACCESS/RETRIEVAL SYSTEM
+          LIBRARY COMPUTER ACCESS AND RETRIEVAL SYSTEM
       </div>
     </div>
   `);
