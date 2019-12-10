@@ -36,6 +36,12 @@ body {
   font-size: 200%;
 }
 
+@keyframes navheaderflash {
+  0% { background-color: #844; }
+  49% { background-color: #844; }
+  50% { background-color: #422; }
+  100% { background-color: #422; }
+}
 
 .lcarscurren {
   color: #EEE;
@@ -90,6 +96,6 @@ body {
 
 ::-webkit-scrollbar-thumb
 {
-    background-color: #822;
+    background-color: #322;
     border: 8px solid black;
 }

@@ -31,6 +31,9 @@ let makenav = function() {
     <div id="navheader">${navtext}</div>
     <div id="lcarslist"></div>
   `);
+  $("#navheader").click(function(e) {
+    request_new_book();
+  });
 }
 
 let makebod = function() {
@@ -65,6 +68,7 @@ let set_book = function(data) {
    *   fields: [["dog", ["fantastic dog"]], ["frog", ["frog, tolerable"]]],
    * }
    */
+  set_already_requested_false();
   if(data.error) {
     if(data.error[0] == "http") {
       makeerror_http(data);
@@ -119,9 +123,22 @@ let showtexterror = function(status) {
 }
 
 var retrysoon = false;
-var seconds = 999;
 var BOOKCHANGE_INTERVAL = 600;
 var RETRY_INTERVAL = 10;
+var MANY_SECONDS = 999; // should be more than the other seconds values
+var seconds = MANY_SECONDS;
+var already_requested = false;
+
+var set_already_requested_false = function() { already_requested = false; }
+
+let request_new_book = function() {
+  if(already_requested)
+    return;
+  already_requested = true;
+  $("#navheader").css("animation", "");
+  $("#navheader").css("animation", "navheaderflash 0.5s linear 1");
+  seconds = MANY_SECONDS;
+}
 
 let bookchanger = function() {
   seconds++;
