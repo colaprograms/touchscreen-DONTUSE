@@ -9,4 +9,5 @@ CHROMIUM="/usr/bin/chromium-browser --noerrdialogs --disable-infobars --kiosk"
 cd /home/pi/Downloads/touchscreen
 trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 ./server &> log/log &
+/bin/sleep 1
 ${CHROMIUM} http://localhost:9000/
