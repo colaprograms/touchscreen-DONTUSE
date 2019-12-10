@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CHROMIUM="/usr/bin/chromium-browser --noerrdialogs --disable-infobars --kiosk"
+CHROMIUM="/usr/bin/chromium-browser --disable-pinch --overscroll-history-navigation=0 --noerrdialogs --disable-infobars --kiosk"
 /usr/bin/xset s noblank
 /usr/bin/xset s off
 /usr/bin/xset -dpms
