@@ -81,9 +81,9 @@ body {
 }
 
 #lcarstext {
-  font-size: 100%;
+  font-size: 90%;
   writing-mode: vertical-rl;
-  padding: 0.8em 0.22em 0.8em 0.2em;
+  padding: 0.8em 0.26em 0.8em 0.30em;
   border-top: 24px double black;
 }
 

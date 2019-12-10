@@ -8,6 +8,7 @@ CHROMIUM="/usr/bin/chromium-browser --disable-pinch --overscroll-history-navigat
 
 cd /home/pi/Downloads/touchscreen
 trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
-./server &> log/log &
+./server &> log/server.log &
+./screentimer &> log/timer.log &
 /bin/sleep 1
 ${CHROMIUM} http://localhost:9000/
