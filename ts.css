@@ -19,14 +19,14 @@ body {
 
 #nav {
   height: 100%;
-  width: 112px;
+  width: 224px;
   position: fixed;
   z-index: 1;
   top: 0;
   left: 0;
-  padding: 0px 0px 20px 0px;
+  padding: 0px 0px 40px 0px;
   display: grid;
-  grid-template-columns: 82px 13px 17px;
+  grid-template-columns: 164px 26px 34px;
   grid-template-rows: min-content auto;
 }
 
@@ -36,8 +36,8 @@ body {
 
 #navheader {
   grid-column: 1 / span 3;
-  padding: 20px 20px 20px 20px;
-  margin-bottom: 22px;
+  padding: 40px 40px 40px 40px;
+  margin-bottom: 30px;
   background-color: #422;
   font-size: 200%;
 }
@@ -60,7 +60,7 @@ body {
 #lcarslist {
   grid-column: 1 / span 1;
   background-color: #422;
-  padding: 10px 10px 10px 10px;
+  padding: 20px 20px 20px 20px;
   font-size: 70%;
 }
 
@@ -80,8 +80,8 @@ body {
 #lcarstext {
   font-size: 70%;
   writing-mode: vertical-rl;
-  padding: 0.8em 0.2em 0.8em 0.16em;
-  border-top: 3px solid black;
+  padding: 0.8em 0.22em 0.8em 0.2em;
+  border-top: 24px double black;
 }
 
 #lcarstexu {
@@ -92,8 +92,8 @@ body {
 }
 
 #body {
-  margin-left: 121px;
-  padding: 20px;
+  margin-left: 242px;
+  padding: 40px;
 }
 
 #fields {
@@ -103,7 +103,7 @@ body {
 
 .fieldspac {
   grid-column: 1 / span 3;
-  height: 6px;
+  height: 12px;
 }
 
 .fielddata {
@@ -121,8 +121,8 @@ body {
 
 ::-webkit-scrollbar
 {
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
 }
 
 ::-webkit-scrollbar-track
@@ -133,5 +133,5 @@ body {
 ::-webkit-scrollbar-thumb
 {
     background-color: #422;
-    border: 8px solid black;
+    border: 16px solid black;
 }
