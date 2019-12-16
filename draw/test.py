@@ -3,7 +3,7 @@
 
 import pyrealsense2 as rs
 import numpy as np
-import cv2
+import time
 import dlib
 
 class facedetector:
@@ -13,8 +13,8 @@ class facedetector:
   def start(self):
     self.pipeline = rs.pipeline()
     self.config = rs.config()
-    self.config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 60)
-    self.config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 60)
+    self.config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+    self.config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
     self.fd = dlib.get_frontal_face_detector()
     self.sp = dlib.shape_predictor("landmarks.dat")
@@ -45,10 +45,18 @@ if __name__ == "__main__":
   fd = facedetector()
   fd.start()
   wi = dlib.image_window()
+  framecount = -1
   try:
     while True:
       out = fd.get()
       if out is not None:
+        if framecount == -1:
+          framecount = 0
+          starttime = time.time()
+          pass
+        else:
+          framecount += 1
+          print(f"FPS: {framecount / (time.time() - starttime)}")
         depthimage, colorimage, shape = out
         print(colorimage.shape)
         wi.set_image(colorimage)
