@@ -218,11 +218,10 @@ let bookchanger = function() {
     }
     else {
       set_body_to_text(`Sandbox is closed, no random book for now`);
-      setTimeout(wait_for_opening, 60000);
     }
   };
 
-  /* allow it to blink for at least one second */
+  /* allow it to blink for at least 600 ms */
   setTimeout(wait_for_opening, 600);
 };
 
