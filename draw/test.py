@@ -6,63 +6,108 @@ import numpy as np
 import time
 import dlib
 
+class average:
+    def __init__(self):
+        self.count = 0
+        self.accum = 0
+
+    def add(self, j):
+        self.count += 1
+        self.accum += j
+
+    def get(self):
+        return self.accum / self.count if self.count >= 1 else 0
+
+class timeaverage:
+    def __init__(self):
+        self.avg = average()
+        self.t = None
+
+    def start(self):
+        if self.t is not None:
+            raise Exception("started twice")
+        self.t = time.time()
+
+    def stop(self):
+        if self.t is None:
+            raise Exception("already stop")
+        self.avg.add(time.time() - self.t)
+        self.t = None
+
+    def get(self):
+        return self.avg.get()
+
+facebbtimer = timeaverage()
+
+shapestimer = timeaverage()
+
 class facedetector:
-  def __init__(self):
-    pass
+    def __init__(self):
+        pass
 
-  def start(self):
-    self.pipeline = rs.pipeline()
-    self.config = rs.config()
-    self.config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-    self.config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+    def start(self):
+        self.pipeline = rs.pipeline()
+        self.config = rs.config()
+        self.config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 60)
+        self.config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 60)
 
-    self.fd = dlib.get_frontal_face_detector()
-    self.sp = dlib.shape_predictor("landmarks.dat")
+        self.fd = dlib.get_frontal_face_detector()
+        self.sp = dlib.shape_predictor("landmarks.dat")
 
-    self.pipeline.start(self.config)
+        self.pipeline.start(self.config)
 
-  def face_detector(self, im):
-    facebb = self.fd(im)
-    print(f"Number of faces: {len(facebb)}")
-    return [self.sp(im, b) for b in facebb]
+    def face_detector(self, im):
+        facebbtimer.start()
+        facebb = self.fd(im)
+        facebbtimer.stop()
+        #print(f"Number of faces: {len(facebb)}")
+        def sp(b):
+            shapestimer.start()
+            out = self.sp(im, b)
+            shapestimer.stop()
+            return out
+        return [sp(b) for b in facebb]
 
-  def get(self):
-    frames = self.pipeline.wait_for_frames()
-    depth_frame = frames.get_depth_frame()
-    color_frame = frames.get_color_frame()
-    if not depth_frame or not color_frame:
-      return None
-    depth_image = np.asanyarray(depth_frame.get_data())
-    color_image = np.asanyarray(color_frame.get_data())
-    color_image = color_image[:, :, [2,1,0]]
-    shape = self.face_detector(color_image)
-    return (depth_image, color_image, shape)
+    def get(self):
+        frames = self.pipeline.wait_for_frames()
+        depth_frame = frames.get_depth_frame()
+        color_frame = frames.get_color_frame()
+        if not depth_frame or not color_frame:
+            return None
+        depth_image = np.asanyarray(depth_frame.get_data())
+        color_image = np.asanyarray(color_frame.get_data())
+        color_image = color_image[:, :, [2,1,0]]
+        shape = self.face_detector(color_image)
+        return (depth_image, color_image, shape)
 
-  def stop(self):
-    self.pipeline.stop()
+    def stop(self):
+        self.pipeline.stop()
 
 if __name__ == "__main__":
-  fd = facedetector()
-  fd.start()
-  wi = dlib.image_window()
-  framecount = -1
-  try:
-    while True:
-      out = fd.get()
-      if out is not None:
-        if framecount == -1:
-          framecount = 0
-          starttime = time.time()
-          pass
-        else:
-          framecount += 1
-          print(f"FPS: {framecount / (time.time() - starttime)}")
-        depthimage, colorimage, shape = out
-        print(colorimage.shape)
-        wi.set_image(colorimage)
-        wi.clear_overlay()
-        for s in shape:
-          print(f"{s.part(0)} {s.part(1)}")
-          wi.add_overlay(s)
-  finally:
-    fd.stop()
+    fd = facedetector()
+    fd.start()
+    wi = dlib.image_window()
+    framecount = -1
+    try:
+        while True:
+            out = fd.get()
+            if out is not None:
+                if framecount == -1:
+                    framecount = 0
+                    starttime = time.time()
+                    pass
+                else:
+                    framecount += 1
+                    if framecount % 100 == 0:
+                        print(f"FPS: {framecount / (time.time() - starttime)}")
+                        print(f"Face bounding boxes take {facebbtimer.get()} on average")
+                        print(f"Shape prediction takes {shapestimer.get()} on average")
+                depthimage, colorimage, shape = out
+                #print(colorimage.shape)
+                wi.set_image(colorimage)
+                wi.clear_overlay()
+                for s in shape:
+                    #print(f"{s.part(0)} {s.part(1)}")
+                    wi.add_overlay(s)
+    finally:
+        fd.stop()
