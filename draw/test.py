@@ -62,6 +62,11 @@ class facedetector:
         self.pipeline.start(self.config)
 
     def face_detector(self, im):
+        def sp(b):
+            shapestimer.start()
+            out = self.sp(im, b)
+            shapestimer.stop()
+            return out
         if self.currentbb is None:
             facebbtimer.start()
             facebb = self.fd(im)
@@ -87,17 +92,13 @@ class facedetector:
                     return rect
                 else:
                     return None
+            expands = [60, 640]
             for ex in expands:
                 rect = tryfindface(t, b, l, r, ex)
                 if rect:
                     break
                 print("expansion %d failed" % ex)
             self.currentbb = rect
-        def sp(b):
-            shapestimer.start()
-            out = self.sp(im, b)
-            shapestimer.stop()
-            return out
         if self.currentbb is not None:
             return sp(self.currentbb)
         else:
