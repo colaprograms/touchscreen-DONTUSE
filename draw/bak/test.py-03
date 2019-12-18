@@ -46,6 +46,14 @@ shortftimer = timeaverage()
 def decompose(r):
     return r.top(), r.bottom(), r.left(), r.right()
 
+def bounds(aa):
+    return min(aa), max(aa)
+def box_of(shape):
+    partsx, partsy = zip(*[(p.x, p.y) for p in shape.parts()])
+    t, b = bounds(partsy)
+    l, r = bounds(partsx)
+    return dlib.rectangle(l, t, r, b)
+
 class facedetector:
     def __init__(self):
         self.currentbb = None
@@ -67,42 +75,31 @@ class facedetector:
             out = self.sp(im, b)
             shapestimer.stop()
             return out
-        if self.currentbb is None:
+
+        reregister = self.currentbb is None
+
+        if reregister:
             facebbtimer.start()
             facebb = self.fd(im)
             facebbtimer.stop()
             if len(facebb) > 0:
                 self.currentbb = facebb[0]
-        else:
-            h, w, _ = im.shape
-            t, b, l, r = decompose(self.currentbb)
-            def tryfindface(t, b, l, r, expand):
-                t = max(0, t - expand)
-                b = min(h, b + expand)
-                l = max(0, l - expand)
-                r = min(w, r + expand)
-                shortftimer.start()
-                facebb = self.fd(im[t:b, l:r, :])
-                shortftimer.stop()
-                if len(facebb) > 1:
-                    raise Exception("too many faces in the little box??")
-                elif len(facebb) == 1:
-                    rect = facebb[0]
-                    rect = dlib.translate_rect(rect, dlib.point(l, t))
-                    return rect
-                else:
-                    return None
-            expands = [60, 640]
-            for ex in expands:
-                rect = tryfindface(t, b, l, r, ex)
-                if rect:
-                    break
-                print("expansion %d failed" % ex)
-            self.currentbb = rect
-        if self.currentbb is not None:
-            return sp(self.currentbb)
-        else:
-            return None
+
+        if self.currentbb:
+            t0, b0, l0, r0 = decompose(self.currentbb)
+            shape = sp(self.currentbb)
+            t1, b1, l1, r1 = decompose(box_of(shape))
+            t1 -= 25
+            b1 += 2
+            l1 -= 2
+            r1 += 2
+            self.currentbb = dlib.rectangle(l1, t1, r1, b1)
+            self.currentbb = self.currentbb.intersect(dlib.rectangle(0, 0, im.shape[1], im.shape[0]))
+            print("height %d -> %d" % (b0 - t0, b1 - t1))
+            print("width %d -> %d" % (r0 - l0, r1 - l1))
+            return shape
+
+        return None
 
     def get(self):
         frames = self.pipeline.wait_for_frames()
@@ -134,17 +131,17 @@ if __name__ == "__main__":
                     pass
                 else:
                     framecount += 1
-                    if framecount % 100 == 0:
-                        print(f"FPS: {framecount / (time.time() - starttime)}")
-                        print(f"Face bounding boxes take {facebbtimer.get()} on average")
-                        print(f"Shape prediction takes {shapestimer.get()} on average")
-                        print(f"Small face bounding boxes: {shortftimer.get()} on average")
+                    print(f"FPS: {framecount / (time.time() - starttime)}")
+                    #print(f"Face bounding boxes take {facebbtimer.get()} on average")
+                    #print(f"Shape prediction takes {shapestimer.get()} on average")
+                    #print(f"Small face bounding boxes: {shortftimer.get()} on average")
+                    #time.sleep(0.2)
                 depthimage, colorimage, shape = out
                 #print(colorimage.shape)
                 wi.set_image(colorimage)
                 wi.clear_overlay()
                 if shape is not None:
-                    #wi.add_overlay(shape.rect)
+                    wi.add_overlay(shape.rect)
                     wi.add_overlay(shape)
     finally:
         fd.stop()
