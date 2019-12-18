@@ -58,6 +58,7 @@ class facedetector:
 
         self.fd = dlib.get_frontal_face_detector()
         self.sp = dlib.shape_predictor("landmarks.dat")
+        self.pd = dlib.pyramid_down(2)
 
         self.pipeline.start(self.config)
 
@@ -69,30 +70,34 @@ class facedetector:
             return out
         if self.currentbb is None:
             facebbtimer.start()
-            facebb = self.fd(im)
+            i2 = self.pd(im)
+            facebb = self.fd(i2)
             facebbtimer.stop()
             if len(facebb) > 0:
-                self.currentbb = facebb[0]
+                self.currentbb = self.pd.rect_up(facebb[0])
         else:
-            h, w, _ = im.shape
-            t, b, l, r = decompose(self.currentbb)
+            i2 = self.pd(im)
+            h, w, _ = i2.shape
+            #t, b, l, r = decompose(self.currentbb)
+            t, b, l, r = decompose(self.pd.rect_down(self.currentbb))
             def tryfindface(t, b, l, r, expand):
                 t = max(0, t - expand)
                 b = min(h, b + expand)
                 l = max(0, l - expand)
                 r = min(w, r + expand)
                 shortftimer.start()
-                facebb = self.fd(im[t:b, l:r, :])
+                facebb = self.fd(i2[t:b, l:r, :])
                 shortftimer.stop()
                 if len(facebb) > 1:
                     raise Exception("too many faces in the little box??")
                 elif len(facebb) == 1:
                     rect = facebb[0]
                     rect = dlib.translate_rect(rect, dlib.point(l, t))
-                    return rect
+                    return self.pd.rect_up(rect)
                 else:
                     return None
-            expands = [60, 640]
+            #expands = [60, 640]
+            expands = [60, 320]
             for ex in expands:
                 rect = tryfindface(t, b, l, r, ex)
                 if rect:
