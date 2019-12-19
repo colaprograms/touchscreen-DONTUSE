@@ -73,11 +73,9 @@ class facedetector:
 
             def rect_up(self, rect):
                 return rect
-        self.pd = pyramid() #self.pd = dlib.pyramid_down(2)
+        self.pd = dlib.pyramid_down(2)
 
         self.pipeline.start(self.config)
-
-        #self.alignment = rs.align(rs.stream.color)
 
     def face_detector(self, im):
         def sp(b):
@@ -130,93 +128,61 @@ class facedetector:
 
     def get(self):
         frames = self.pipeline.wait_for_frames()
-        #frames = self.alignment.process(frames)
         depth_frame = frames.get_depth_frame()
         color_frame = frames.get_color_frame()
-        t = color_frame.get_frame_metadata(rs.frame_metadata_value.backend_timestamp)
+        if not depth_frame or not color_frame:
+            return None
         depth_image = np.asanyarray(depth_frame.get_data())
         color_image = np.asanyarray(color_frame.get_data())
         color_image = color_image[:, :, [2,1,0]]
         shape = self.face_detector(color_image)
-        return (
-            t,
-            depth_image,
-            color_image,
-            shape
-        )
+        return (depth_image, color_image, shape)
 
     def stop(self):
         self.pipeline.stop()
 
-class predicteyes:
-    def __init__(self):
-        self.t0 = None
-
-    def __call__(self, t, l, le, r, re):
-        if self.t0 is None:
-            self.t0 = t
-        t -= self.t0
-        scale = ((le[0]**2 + re[0]**2) / 2) ** 0.5
-        print("t = %6.2f   scale = %6.2f   l = %9.2f %9.2f"% (t, scale, l[0], l[1]))
-
-PARTS_L_EYE = range(36, 42)
-PARTS_R_EYE = range(42, 48)
-def average_on_box_around_point(img, x, y, scale):
-    x = int(x)
-    y = int(y)
-    scale = int(scale + 0.5)
-    l = max(0, x - scale)
-    r = min(img.shape[1], x + scale)
-    t = max(0, y - scale)
-    b = min(img.shape[0], y + scale)
-    img = img[t:b, l:r]
-    print(img)
-    return np.mean(img[img != 0])
-
-def coordinates(t, depthimage, colorimage, shape):
-    left, leftv = meanof(shape, PARTS_L_EYE)
-    right, rightv = meanof(shape, PARTS_R_EYE)
-    lscale = leftv[0]
-    rscale = rightv[0]
-    ld = average_on_box_around_point(depthimage, left[0], left[1], lscale)
-    rd = average_on_box_around_point(depthimage, right[0], right[1], rscale)
-    return np.array([(left[0] + right[0]) / 2, (left[1] + right[1]) / 2, (ld + rd) / 2])
-
 if __name__ == "__main__":
     fd = facedetector()
     fd.start()
+    wi = dlib.image_window()
     framecount = -1
-    predict = predicteyes()
-    def meanof(shape, ix):
-        sp = [shape.part(i) for i in ix]
-        v = np.array([[p.x, p.y] for p in sp])
-        return np.mean(v, axis=0), np.std(v, axis=0)
     try:
         while True:
             otherstimer.stop()
             out = fd.get()
             otherstimer.start()
             if out is not None:
-                framecount += 1
-                if framecount > 0:
+                if framecount == -1:
+                    framecount = 0
+                    starttime = time.time()
+                    pass
+                else:
+                    framecount += 1
                     if framecount % 100 == 0:
                         print(f"FPS: {framecount / (time.time() - starttime)}")
-                        """
                         print(f"Face bounding boxes take {facebbtimer.get()} on average")
                         print(f"Shape prediction takes {shapestimer.get()} on average")
                         print(f"Small face bounding boxes: {shortftimer.get()} on average")
                         print(f"Other stuff: {otherstimer.get()} on average")
-                        """
-                        framecount = 0
-                        starttime = time.time()
-                else:
-                    starttime = time.time()
-                t, depthimage, colorimage, shape = out
+                depthimage, colorimage, shape = out
+                #print(colorimage.shape)
+                depthimage = np.minimum(depthimage, 1000)
+                wi.set_image(colorimage)
+                wi.clear_overlay()
                 if shape is not None:
-                    (x, y, z) = coordinates(t, depthimage, colorimage, shape)
-                    print("%6.2f    %6.2f    %6.2f" % (x, y, z))
-                    #predict(t, left, right)
-                else:
-                    print("no eyes found this frame")
+                    def topoint(dp):
+                        return dlib.point(dp.x, dp.y)
+                    fobp = dlib.full_object_detection(shape.rect, [topoint(shape.part(i)) for i in range(shape.num_parts)])
+                    wi.add_overlay(fobp)
+                    wi.add_overlay(shape.rect)
+                    #print(shape.num_parts)
+                    #for i in range(36, framecount % 68):
+                    def meanof(ix):
+                        sp = [shape.part(i) for i in ix]
+                        v = np.array([[p.x, p.y] for p in sp])
+                        v = np.mean(v, axis=0)
+                        return dlib.dpoint(v[0], v[1])
+                    for r in range(36, 42), range(42, 48):
+                        wi.add_overlay_circle(meanof(r), 3)
     finally:
         fd.stop()
