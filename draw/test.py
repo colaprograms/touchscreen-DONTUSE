@@ -77,7 +77,7 @@ class facedetector:
 
         self.pipeline.start(self.config)
 
-        #self.alignment = rs.align(rs.stream.color)
+        self.alignment = rs.align(rs.stream.color)
 
     def face_detector(self, im):
         def sp(b):
@@ -130,7 +130,7 @@ class facedetector:
 
     def get(self):
         frames = self.pipeline.wait_for_frames()
-        #frames = self.alignment.process(frames)
+        frames = self.alignment.process(frames)
         depth_frame = frames.get_depth_frame()
         color_frame = frames.get_color_frame()
         t = color_frame.get_frame_metadata(rs.frame_metadata_value.backend_timestamp)
@@ -148,16 +148,41 @@ class facedetector:
     def stop(self):
         self.pipeline.stop()
 
+class midavg:
+    def __init__(self, lth):
+        self.last = np.zeros(lth)
+        self.idx = 0
+        self.valid = 0
+        assert lth & 3 == 0
+
+    def add(self, z):
+        self.last[idx] = z
+        self.idx += 1
+        l = self.last.shape[0]
+        if self.valid < l:
+            self.valid += 1
+        if self.idx >= l:
+            self.idx -= l
+        out = np.sort(self.last)
+        return np.mean(out[l//4, 3*l//4])
+
 class predicteyes:
     def __init__(self):
         self.t0 = None
 
+    def __call__(self, t, x, y, z):
+        if self.t0 is None:
+            self.t0 = t
+        t -= self.t0
+
+    """
     def __call__(self, t, l, le, r, re):
         if self.t0 is None:
             self.t0 = t
         t -= self.t0
         scale = ((le[0]**2 + re[0]**2) / 2) ** 0.5
         print("t = %6.2f   scale = %6.2f   l = %9.2f %9.2f"% (t, scale, l[0], l[1]))
+    """
 
 PARTS_L_EYE = range(36, 42)
 PARTS_R_EYE = range(42, 48)
@@ -165,12 +190,12 @@ def average_on_box_around_point(img, x, y, scale):
     x = int(x)
     y = int(y)
     scale = int(scale + 0.5)
+    scale //= 2
     l = max(0, x - scale)
     r = min(img.shape[1], x + scale)
     t = max(0, y - scale)
     b = min(img.shape[0], y + scale)
     img = img[t:b, l:r]
-    print(img)
     return np.mean(img[img != 0])
 
 def coordinates(t, depthimage, colorimage, shape):
@@ -215,6 +240,7 @@ if __name__ == "__main__":
                 if shape is not None:
                     (x, y, z) = coordinates(t, depthimage, colorimage, shape)
                     print("%6.2f    %6.2f    %6.2f" % (x, y, z))
+                    #print(t, x, y, z)
                     #predict(t, left, right)
                 else:
                     print("no eyes found this frame")
