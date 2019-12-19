@@ -119,7 +119,7 @@ class facedetector:
                 rect = tryfindface(t, b, l, r, ex)
                 if rect:
                     break
-                print(f"couldn't find the face with expansion {ex}")
+                #print(f"couldn't find the face with expansion {ex}")
             shortftimer.stop()
             self.currentbb = rect
         if self.currentbb is not None:
@@ -163,17 +163,26 @@ class midavg:
             self.valid += 1
         if self.idx >= l:
             self.idx -= l
-        out = np.sort(self.last)
-        return np.mean(out[l//4, 3*l//4])
+        return self.get()
+
+    def get(slf):
+        out = np.sort(slf.last)
+        return np.mean(out[l >> 2, 3 * (l>>2)])
 
 class predicteyes:
     def __init__(self):
         self.t0 = None
+        LENGTH = 8
+        self.mids = [midavg(LENGTH) for j in range(3)]
+        self.out = np.zeros(3)
 
     def __call__(self, t, x, y, z):
         if self.t0 is None:
             self.t0 = t
         t -= self.t0
+        for (j, c) in [x, y, z]:
+            out[j] = self.mids[j].add(c)
+        return t, self.out
 
     """
     def __call__(self, t, l, le, r, re):
