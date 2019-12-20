@@ -135,11 +135,16 @@ class facedetector:
             return None
 
     def get(self):
-        frames = self.pipeline.wait_for_frames()
-        frames = self.alignment.process(frames)
+        waiting = True
+        while waiting:
+            frames = self.pipeline.wait_for_frames()
+            frames = self.alignment.process(frames)
+            color_frame = frames.get_color_frame()
+            t = color_frame.get_frame_metadata(rs.frame_metadata_value.backend_timestamp)
+            if t != self.last:
+                waiting = False
+            self.last = t
         depth_frame = frames.get_depth_frame()
-        color_frame = frames.get_color_frame()
-        t = color_frame.get_frame_metadata(rs.frame_metadata_value.backend_timestamp)
         depth_image = np.asanyarray(depth_frame.get_data())
         color_image = np.asanyarray(color_frame.get_data())
         color_image = color_image[:, :, [2,1,0]]
@@ -154,6 +159,7 @@ class facedetector:
     def stop(self):
         self.pipeline.stop()
         self.alignment = None
+        self.last = None
 
 class midavg:
     def __init__(self, lth):
