@@ -205,18 +205,22 @@ class predicteyes:
     def __init__(self):
         self.stop()
         self.out = np.zeros(3)
-
-    def stop(self):
+        self.reset = True
         self.t0 = None
 
+    def stop(self):
+        self.reset = True
+
     def __call__(self, t, x, y, z):
-        if self.t0 is None:
-            self.t0 = t
+        if self.reset:
+            if self.t0 is None:
+                self.t0 = t
             self.mids = [
                 dampve(1, 0.1),
                 dampve(1, 0.1),
                 dampve(1, 0.1)
             ]
+            self.reset = False
         t -= self.t0
         for (j, c) in enumerate([x, y, z]):
             self.out[j] = self.mids[j].add(t, c) #(c)
