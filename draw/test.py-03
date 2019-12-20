@@ -141,6 +141,24 @@ class facedetector:
     def stop(self):
         self.pipeline.stop()
 
+class imagewindow:
+    def __init__(self):
+        self.wi = dlib.image_window()
+
+    def show(self, out):
+        t, depthimage, colorimage, shape = out
+        wi.set_image(colorimage)
+        wi.clear_overlay()
+        if shape is not None:
+            def topoint(dp):
+                return dlib.point(dp.x, dp.y)
+            fobp = dlib.full_object_detection(shape.rect, [topoint(shape.part(i)) for i in range(shape.num_parts)])
+            wi.add_overlay(fobp)
+            wi.add_overlay(shape.rect)
+
+    def overlay_circle(self, x, y):
+        wi.add_overlay_circle(dlib.dpoint(x, y), 3)
+
 if __name__ == "__main__":
     fd = facedetector()
     fd.start()
