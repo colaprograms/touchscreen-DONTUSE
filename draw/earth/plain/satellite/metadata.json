@@ -1,0 +1,19 @@
+{
+    "name": "OpenMapTiles Satellite Lowres",
+    "description": "",
+    "legend": null,
+    "attribution": "<a href=\"https://www.maptiler.com/copyright/\" target=\"_blank\">&copy; MapTiler</a>",
+    "type": "baselayer",
+    "version": "1.2",
+    "format": "jpg",
+    "format_arguments": "-f jpeg -bg 12 28 43 ",
+    "minzoom": "0",
+    "maxzoom": "5",
+    "bounds": "-180.000000,-85.051129,179.996547,85.051129",
+    "scale": "1.000000",
+    "profile": "mercator",
+    "scheme": "tms",
+    "color": "#0C1C2B",
+    "generator": "MapTiler Pro 8.0-1b618e67",
+    "id": "openmaptiles_satellite_lowres"
+}
