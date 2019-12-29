@@ -14,7 +14,7 @@ loadPrcFileData('', """
 from pandac.PandaModules import *
 from direct.task import Task
 import numpy as np
-
+from projec import pt2sphere
 
 # atashi iya ne
 class roundedplate:
@@ -38,10 +38,9 @@ class roundedplate:
                 v = (y + 1) / 2
                 #u = u * 0.999 + 0.0005
                 #v = v * 0.999 + 0.0005
-                self.vertex.addData3f(x, y, 0)
-                self.normal.addData3f(
-                    Vec3(2 * x - 1, 2 * y - 1, -1).normalize()
-                )
+                X, Y, Z = pt2sphere(x, y)
+                self.vertex.addData3f(X, Y, Z)
+                self.normal.addData3f(X, Y, Z)
                 self.texcoord.addData2f(u, v)
 
         triangles = []
@@ -106,8 +105,13 @@ class planet:
         
     def init(self):
         planet = NodePath('planet')
-        shaders = Shader.load(Shader.SLGLSL, 'vert.glsl', 'frag.glsl')
-        planet.setShader(shaders)
+        #shaders = Shader.load(Shader.SLGLSL, 'vert.glsl', 'frag.glsl')
+        #planet.setShader(shaders)
+        
+        material = Material()
+        #material.setShininess(0.1)
+        material.setShininess(1)
+        material.setSpecular((0.2, 0.2, 0.2, 1))
         
         for (j, side) in enumerate(roundedplate.sides.keys()):
             te = loader.loadTexture("satellite-%d.png" % j)
@@ -119,6 +123,7 @@ class planet:
             )
         
         planet.setScale(1/2) # iya
+        planet.setMaterial(material)
         self.nodePath = planet
 
 class plight:
@@ -126,21 +131,27 @@ class plight:
         spot = Spotlight('spot')
         lens = PerspectiveLens()
         spot.setLens(lens)
-        spot.setColor((1, 0, 0, 1))
+        spot.setColor((1, 1, 1, 1))
+        
+        ambi = AmbientLight('ambient')
+        ambi.setColor((0.4, 0.4, 0.4, 1))
         
         spotNP = render.attachNewNode(spot)
-        spotNP.setPos(-10, -2, 4)
+        spotNP.setPos(-1, -2, 1)
+        #spotNP.setPos(-1, -2, 0)
         spotNP.lookAt(0, 0, 0)
         
+        ambiNP = render.attachNewNode(ambi)
+        
         self.spotNP = spotNP
+        self.ambiNP = ambiNP
+        self.lights = [self.spotNP, self.ambiNP]
     
     def on(self, bool=True):
-        if bool:
-            render.setLight(self.spotNP)
-        else:
-            render.clearLight(self.spotNP)
-        pass
-
+        f = render.setLight if bool else render.clearLight
+        for l in self.lights:
+            f(l)
+        
 class Planet(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
