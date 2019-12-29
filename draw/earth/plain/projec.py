@@ -19,6 +19,31 @@ def _cmp(a, b, c):
 def pt_to_sphere(x, y, z):
     return _cmp(x, y, z), _cmp(y, z, x), _cmp(z, x, y)
 
+def sphere_to_latlon(x, y, z):
+    r2 = x*x + y*y + z*z
+    if abs(r2 - 1) > 1e-12:
+        raise Exception("radius isn't 1")
+    lat = 180 / math.pi * math.asin(z)
+    lon = 180 / math.pi * math.atan2(y, x)
+    return lat, lon
+
+def latlon_to_mercator(lat, lon):
+    x = (lon + 180) / 360
+    lat *= math.pi / 180
+    y = math.tan(math.pi / 4 + lat / 2)
+    y = math.log(y)
+    y = 0.5 - y / 2 / math.pi
+    # clip at 85 degrees
+    if y > 1:
+        y = 1
+    if y < 0:
+        y = 0
+    return x, y
+
+def pt_to_mercator(x, y, z):
+    x, y, z = pt_to_sphere(x, y, z)
+    lat, lon = sphere_to_latlon(x, y, z)
+    return latlon_to_mercator(lat, lon)
 # z = 1
 
 """
