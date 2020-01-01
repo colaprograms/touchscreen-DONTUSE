@@ -115,6 +115,8 @@ class planet:
         
         for (j, side) in enumerate(roundedplate.sides.keys()):
             te = loader.loadTexture("satellite-%d.png" % j)
+            te.setMinfilter(SamplerState.FT_linear_mipmap_linear)
+            te.setAnisotropicDegree(16)
             te.setWrapU(Texture.WM_clamp)
             te.setWrapV(Texture.WM_clamp)
             (roundedplate(planet)
