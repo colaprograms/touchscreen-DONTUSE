@@ -16,18 +16,63 @@ from direct.task import Task
 import numpy as np
 from projec import convert
 
-# atashi iya ne
-class roundedplate:
+class mesh:
     def __init__(self, path):
-        self.grid()
+        self.nodePath = self.mesh()
         self.nodePath.reparentTo(path)
-            
-    def grid(self):
+    
+    def mesh(self):
         self.format = GeomVertexFormat.getV3n3c4t2()
-        self.vdata = GeomVertexData('quadFace', self.format, Geom.UHDynamic)
+        self.data = GeomVertexData('quadFace', self.format, Geom.UHStatic)
         for attr in ['vertex', 'normal', 'color', 'texcoord']:
-            setattr(self, attr, GeomVertexWriter(self.vdata, attr))
+            setattr(self, attr, GeomVertexWriter(self.data, attr))
+        self.triangles = GeomTriangles(Geom.UHStatic)
+        self.create()
         
+        mesh = Geom(self.data)
+        mesh.addPrimitive(self.triangles)
+        mnode = GeomNode('quadface')
+        mnode.addGeom(mesh)
+        
+        return base.render.attachNewNode(mnode)
+        
+    def addvertex(self, pos, nor, tex):
+        self.vertex.addData3f(*pos)
+        self.normal.addData3f(*nor)
+        self.texcoord.addData2f(*tex)
+    
+    def addtriang(self, i, j, l):
+        self.triangles.addVertices(i, j, l)
+
+    def create(self):
+        raise NotImplementedError()
+
+class cube(mesh):
+    def create(self):
+        for x in [-1, 1]:
+            for y in [-1, 1]:
+                for z in [-1, 1]:
+                    r = (x*x + y*y + z*z)**0.5
+                    self.addvertex((x, y, z), (x/r, y/r, z/r), (0, 0))
+        
+        def do(a, b, c):
+            self.addtriang(a, a^b, a^c)
+            self.addtriang(a^c, a^b, a^b^c)
+        
+        # sides
+        do(0, 4, 1)
+        do(0, 2, 4)
+        do(2, 1, 4)
+        do(1, 4, 2)
+        #top
+        do(4, 2, 1)
+        #bottom
+        do(0, 1, 2)
+        
+    def texture(self, te):
+        self.nodePath.setTexture(te)
+class roundedplate(mesh):
+    def create(self):
         POINTS = 33
         points = np.linspace(-1, 1, POINTS)
         for i in range(POINTS):
@@ -39,48 +84,24 @@ class roundedplate:
                 #u = u * 0.999 + 0.0005
                 #v = v * 0.999 + 0.0005
                 X, Y, Z = convert.pt_to_sphere(x, y, 1)#pt2sphere(x, y)
-                self.vertex.addData3f(X, Y, Z)
-                self.normal.addData3f(X, Y, Z)
-                self.texcoord.addData2f(u, v)
-
-        triangles = []
+                self.addvertex( (X, Y, Z), (X, Y, Z), (u, v) )
         
-        class newtriangle:
-            def __init__(self):
-                self.triangle = GeomTriangles(Geom.UHDynamic)
-            
-            def pt(self, i, j):
-                self.triangle.addVertex(i * POINTS + j)
-                return self
-        
-            def put_in(self, triangles):
-                self.triangle.closePrimitive()
-                triangles.append(self.triangle)
+        def what(i, j):
+            return POINTS * i + j
         
         for i in range(POINTS - 1):
             for j in range(POINTS - 1):
-                (newtriangle()
-                    .pt(i, j)
-                    .pt(i, j+1)
-                    .pt(i+1, j)
-                    .put_in(triangles)
+                self.addtriang(
+                    what(i, j),
+                    what(i, j+1),
+                    what(i+1, j)
                 )
-                
-                (newtriangle()
-                    .pt(i, j+1)
-                    .pt(i+1, j+1)
-                    .pt(i+1, j)
-                    .put_in(triangles)
+                self.addtriang(
+                    what(i, j+1),
+                    what(i+1, j+1),
+                    what(i+1, j)
                 )
-                
-        mesh = Geom(self.vdata)
-        for t in triangles:
-            mesh.addPrimitive(t)
-        mnode = GeomNode('quadface')
-        mnode.addGeom(mesh)
-        self.nodePath = base.render.attachNewNode(mnode)
-        return self.nodePath
-    
+        
     sides = {
         "top": (0, 0, 0),
         "bottom": (0, 0, 180),
@@ -97,7 +118,21 @@ class roundedplate:
     def texture(self, te):
         self.nodePath.setTexture(te, 3)
         return self
+    
+    def overlay(self, ts, te):
+        self.nodePath.setTexture(ts, te)
+        return self
 
+    def clear(self, ts):
+        self.nodePath.clearTexture(ts)
+def maketexture(fn):
+    te = loader.loadTexture(fn)
+    te.setMinfilter(SamplerState.FT_linear_mipmap_linear)
+    te.setAnisotropicDegree(16)
+    te.setWrapU(Texture.WM_clamp)
+    te.setWrapV(Texture.WM_clamp)
+    return te
+    
 class planet:
     def __init__(self, nodepath):
         self.init()
@@ -113,21 +148,46 @@ class planet:
         material.setShininess(1)
         material.setSpecular((0.2, 0.2, 0.2, 1))
         
+        self.ov = TextureStage('overlay')
+        self.ov.setMode(TextureStage.MDecal)
+        self.textures = []
+        self.overlays = []
+        
+        self.cube = []
         for (j, side) in enumerate(roundedplate.sides.keys()):
-            te = loader.loadTexture("satellite-%d.png" % j)
-            te.setMinfilter(SamplerState.FT_linear_mipmap_linear)
-            te.setAnisotropicDegree(16)
-            te.setWrapU(Texture.WM_clamp)
-            te.setWrapV(Texture.WM_clamp)
-            (roundedplate(planet)
-                .side(side)
-                .texture(te)
+            self.textures.append( maketexture("satellite-%d.png" % j) )
+            self.overlays.append( maketexture("satellite-goes-%d.png" % j) )
+            #te = maketexture("satellite-%d.png" % j)
+            #t2 = maketexture("satellite-goes-%d.png" % j)
+            self.cube.append(
+                roundedplate(planet)
+                    .side(side)
+                    
             )
+ 
+        self.texture()
         
         planet.setScale(1/2) # iya
         planet.setMaterial(material)
         self.nodePath = planet
-
+    
+    def texture(self):
+        for c, t, t2 in zip(self.cube, self.textures, self.overlays):
+            (c.texture(t)
+                .overlay(self.ov, t2)
+            
+            )
+            
+        #for _ in self.cube:
+        #    _.texture(self.te).overlay(self.ov, self.t2)
+    
+    def overlayswitch(self, which):
+        if which:
+            self.texture()
+        else:
+            for c in self.cube:
+                c.clear(self.ov)
+                
 class plight:
     def __init__(self):
         spot = Spotlight('spot')
@@ -166,36 +226,41 @@ class Planet(ShowBase):
         base.disableMouse()
         base.camLens.setNearFar(0.1, 20)
         
-        planet(base.render)
+        p = planet(base.render)
+        
+        """
+        cuby = cube(base.render)
+        material = Material()
+        material.setShininess(1)
+        material.setSpecular((1, 0.2, 0.2, 1))
+        cuby.nodePath.setScale(1/10)
+        cuby.nodePath.setPos(0, -1, 0)
+        cuby.nodePath.setMaterial(material)
+        cuby.nodePath.reparentTo(p.nodePath)
+        """
         
         light = plight()
         light.on()
-        
-        """
-        planet = NodePath('planet')
-        shaders = Shader.load(Shader.SLGLSL, 'vert.glsl', 'frag.glsl')
-        planet.setShader(shaders)
-        planet.reparentTo(base.render)
-        
-        for (j, side) in enumerate(roundedplate.sides.keys()):
-            te = loader.loadTexture("satellite-%d.png" % j)
-            te.setWrapU(Texture.WM_clamp)
-            te.setWrapV(Texture.WM_clamp)
-            (roundedplate(planet)
-                .side(side)
-                .texture(te)
-            )
-        """
         
         self.taskMgr.add(self.rotator, "rotateplanet")
 
         self.taskMgr.add(self.cameracontrol, "cameramove")
         self.pausecontrol = False
-        def out():
-            self.pausecontrol = not self.pausecontrol
-            base.oobe()
-        self.accept("o", out)
+        self.overlaycontrol = True
         
+        #def out():
+        #    self.pausecontrol = not self.pausecontrol
+        #    base.oobe()
+        
+        #self.accept("o", out)
+        
+        def tsswitch():
+            print("switching")
+            self.overlaycontrol = not self.overlaycontrol
+            p.overlayswitch(self.overlaycontrol)
+        
+        self.accept("o", tsswitch)
+            
     def rotator(self, task):
         planet = render.find("planet")
         planet.setHpr(task.time, 0, 0)
