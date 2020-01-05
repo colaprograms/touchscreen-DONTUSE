@@ -77,11 +77,7 @@ class disk_on_sphere (sphereimage):
         )
         x = (x + 1) / 2
         z = (1 - z) / 2
-        #return _sca(x, self.width), _sca(z, self.height), self.which * y >= 0
-        #mask = np.logical_and.reduce((y <= 0, x >= 0, x < 1, z >= 0, z < 1))
-        #revs = np.logical_not(mask)
-        #x[revs] = 0
-        #z[revs] = 0
+        # add projection?
         return _sca(x, self.width), _sca(z, self.height), y <= 0
         
 def grid(m, o, x, y):
@@ -133,16 +129,18 @@ def composecubemap(projs, m, out):
                 #img.paste(tmp, mask=tmp)
         img.save(out % i)
 
-def cut_out_disc(im):
+def cut_out_disc(im, radius=1):
     out = im.convert('RGBA')
     buf = np.array(out)
     h, w, _ = buf.shape
     y, x = np.meshgrid(np.linspace(-1, 1, h), np.linspace(-1, 1, w))
-    r2 = y**2 + x**2
-    mask = np.zeros_like(r2)
-    mask[r2 >= 1] = 0
-    mask[r2 < 1] = 255 * ((1 - r2[r2 < 1]) / (1 - 0.9)) ** 0.2
-    mask[r2 < 0.9] = 255
+    r = (y**2 + x**2) ** 0.5
+    #buf[r > radius, -1] = 0
+    mask = np.clip((radius - r) / radius, 0, 1)
+    mask = 255 * mask
+    # atashi iya ne
+    #mask[r > radius] = 0
+    #mask[r <= radius] = 255 * ((radius - r[r <= radius]) / radius) ** 0.2
     buf[..., -1] = mask.astype(np.int)
     return Image.fromarray(buf, 'RGBA')
 
@@ -150,17 +148,24 @@ if __name__ == "__main__":
     print("Make regular cubemap? [y/N] ", end="")
     if input().strip() in ["y", "yes"]:
         imgs = "satellite.png",
-        projs = [cybermercator(Image.open(_)) for _ in imgs]
+        projs = [mercator_on_sphere(Image.open(_)) for _ in imgs]
         composecubemap(projs, 1024, "satellite-%d.png")
         #composecubemap(projs, 512, "satellite-%d.png") # whee
     
     print("Make GOES? [y/N] ", end="")
     if input().strip() in ["y", "yes"]:
-        imgs = "satellite-goes-east.png", "satellite-goes-west.png"
-        disc = [cut_out_disc(Image.open(_)) for _ in imgs]
+        imgs = (
+            ("satellite-goes-east.png", 1),
+            ("satellite-goes-west.png", 1),
+            ("satellite-himawaris.png", 0.9803),
+            ("satellite-meteosat8.png", 0.9692)
+        )
+        disc = [cut_out_disc(Image.open(a), b) for (a, b) in imgs]
         projs = [
             disk_on_sphere(disc[0], 75 - 90),
             disk_on_sphere(disc[1], 135 - 90),
+            disk_on_sphere(disc[2], -140.7 - 90),
+            disk_on_sphere(disc[3], -41.5 - 90)
             #disk_on_sphere(disc[0], 0)
             #disk_on_sphere(disc[0], np.pi / 2),
             #disk_on_sphere(disc[1], +1)

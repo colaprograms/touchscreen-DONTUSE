@@ -1,7 +1,6 @@
 from PIL import Image
 from urllib.request import urlopen
-import time
-import numpy
+import time, numpy, json, pickle
 
 def _img(u):
     r = urlopen(u)
@@ -67,37 +66,90 @@ class stitch:
                 self.paste(i, j, url)
                 time.sleep(1)
 
-class epsg3857:
-    # mercator projection
-    URL = "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/"
-    BLUEMARBLESHADED = URL + "BlueMarble_ShadedRelief/" +\
-                       "default/GoogleMapsCompatible_Level8/%d/%d/%d.jpeg"
+    def save(self, fn):
+        self.img.save(fn)
+
+class disk:
+    JSON = "https://rammb-slider.cira.colostate.edu/data/json/goes-%s/full_disk/geocolor/latest_times.json"
+    IMG = "https://rammb-slider.cira.colostate.edu/data/imagery/%%s/goes-%s---full_disk/geocolor/%%s/%%%%02d/%%%%03d_%%%%03d.png"
     
-    GOESEAST = URL + "GOES-East_ABI_Band2_Red_Visible_1km/default/default/1km/%d/%d/%d.png"
-    GOESWEST = URL + "GOES-West_ABI_Band2_Red_Visible_1km/default/default/1km/%d/%d/%d.png"
+    GOESEAST = dict(
+        json = JSON % 16,
+        img = IMG % 16,
+        zoomlevel = 2,
+        filename = "satellite-goes-east.png"
+    )
     
-class marble:
-    #URL_EPSG3413 = "https://gibs.earthdata.nasa.gov/wmts/epsg3413/best/Blue_Marble_Extended/default/1.5km/%d/%d/%d.jpeg"
+    GOESWEST = dict(
+        json = JSON % 17,
+        img = IMG % 17,
+        zoomlevel = 2,
+        filename = "satellite-goes-west.png"
+    )
+    
+    HIMAWARI = dict(
+        json = "https://rammb-slider.cira.colostate.edu/data/json/himawari/full_disk/geocolor/latest_times.json",
+        img = "https://rammb-slider.cira.colostate.edu/data/imagery/%s/himawari---full_disk/geocolor/%s/%%02d/%%03d_%%03d.png",
+        zoomlevel = 2,
+        filename = "satellite-himawaris.png"
+    )
+    
+    METEOSAT8 = dict(
+        json = "https://rammb-slider.cira.colostate.edu/data/json/meteosat-8/full_disk/geocolor/latest_times.json",
+        img = "https://rammb-slider.cira.colostate.edu/data/imagery/%s/meteosat-8---full_disk/geocolor/%s/%%02d/%%03d_%%03d.png",
+        zoomlevel = 2,
+        filename = "satellite-meteosat8.png"
+    )
+    
+        
+    staticmethod
+    def get_last_timestamp(u):
+        r = urlopen(u)
+        assert r.headers.get_content_type() == "application/json"
+        return str(json.load(r)['timestamps_int'][0])
+        
+    @staticmethod
+    def goes(zz):
+        json, img, zoomlevel, filename = zz['json'], zz['img'], zz['zoomlevel'], zz['filename']
+        last = disk.get_last_timestamp(json)
+        
+        try:
+            oldlast = open(filename + ".last-updated").read()
+            if oldlast.strip() == last:
+                print("no new image, skipping")
+                return
+        except FileNotFoundError:
+            pass
+        open(filename + ".last-updated", "w").write("%s" % last)
+        
+        url = img % (last[:8], last)
+        
+        z = stitch(zoomlevel)
+        ntiles = 1 << zoomlevel
+        z.get(url)
+        #z.img.save(filename)
+        z.save(filename) # atashi iya ne
     
     @staticmethod
-    def arctic(zoomlevel):
-        return stitch_tiles_from_url(marble.URL_EPSG3413, zoomlevel)
+    def east():
+        disk.goes(disk.GOESEAST)
     
     @staticmethod
-    def mercator(zoomlevel):
-        return stitch_tiles_from_url(epsg3857.BLUEMARBLESHADED, zoomlevel)
+    def west():
+        disk.goes(disk.GOESWEST)
     
     @staticmethod
-    def goes():
-        #st = stitch(4)
-        #st.get(epsg3857.GOESEAST, (0, 1, 9, 10))
-        #st.get(epsg3857.GOESWEST, (0, 0, 9, 6))
-        #st.get(epsg3857.GOESWEST, (0, 17, 9, 19))
-        st = stitch(2)
-        st.get(epsg3857.GOESWEST, (0, 0, 2, 1))
-        st.get(epsg3857.GOESWEST, (0, 4, 2, 4))
-        st.get(epsg3857.GOESEAST, (0, 0, 2, 2))
-        st.img.save("satellite-goes.png")
+    def himawari():
+        disk.goes(disk.HIMAWARI)
     
+    @staticmethod
+    def meteosat8():
+        disk.goes(disk.METEOSAT8)
+        
+
 if __name__ == "__main__":
-    marble.goes()
+    disk.east()
+    disk.west()
+    disk.himawari()
+    disk.meteosat8()
+    pass
