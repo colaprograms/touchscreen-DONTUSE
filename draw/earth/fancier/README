@@ -1,1 +1,13 @@
-from https://gist.github.com/croxis/6127131
+programs:
+
+stitch.py
+
+- generates the files satellite-goes-east.png, satellite-goes-west.png, satellite-himawaris.png, satellite-meteosat8.png
+
+cubist.py
+
+- generates the cubemaps from those files
+
+sphere.py
+
+- shows an arth
