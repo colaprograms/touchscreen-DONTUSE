@@ -6,7 +6,7 @@ def _img(u):
     r = urlopen(u)
     assert r.headers.get_content_type() in ["image/jpeg", "image/png"]
     img = Image.open(r)
-    print("got", img)
+    #print("got", img)
     return img
     
 class stitch:
@@ -26,7 +26,7 @@ class stitch:
         
         self.tilesize = size[0]
         self.img = Image.new(mode, (self.tilesize * self.ntiles, self.tilesize * self.ntiles))
-        print("created (%s, (%d, %d))" % (mode, self.img.size[0], self.img.size[1]))
+        #print("created (%s, (%d, %d))" % (mode, self.img.size[0], self.img.size[1]))
         
     def pastetile(self, i, j, tile):
         # if the image is RGBA and totally blank, then we ignore it
@@ -46,11 +46,12 @@ class stitch:
         
     def paste(self, i, j, url):
         u = url % (self.zoomlevel, i, j)
-        print("loading %s" % u)
+        #print("loading %s" % u)
         tile = _img(u)
         self.pastetile(i, j, tile)
     
-    def get(self, url, bbox=None):
+    #def get(self, url, bbox=None):
+    def get(self, url, bbox=None, callback=None):
         if bbox is None:
             i0 = 0
             i1 = self.ntiles
@@ -64,8 +65,8 @@ class stitch:
         for i in range(i0, i1):
             for j in range(j0, j1):
                 self.paste(i, j, url)
-                time.sleep(1)
-
+                callback(i, j, url)
+                
     def save(self, fn):
         self.img.save(fn)
 
@@ -116,7 +117,7 @@ class disk:
         try:
             oldlast = open(filename + ".last-updated").read()
             if oldlast.strip() == last:
-                print("no new image, skipping")
+                print("%s up to date" % filename) #print("no new image, skipping")
                 return
         except FileNotFoundError:
             pass
@@ -126,9 +127,15 @@ class disk:
         
         z = stitch(zoomlevel)
         ntiles = 1 << zoomlevel
-        z.get(url)
+        #print("building %s" % filename, end="")
+        print("building %s" % filename, end="", flush=True)
+        def callback(i, j, url):
+            print(".", end="", flush=True)
+            time.sleep(1)
+        z.get(url, callback=callback)
         #z.img.save(filename)
         z.save(filename) # atashi iya ne
+        print("")
     
     @staticmethod
     def east():

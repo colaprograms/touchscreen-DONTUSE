@@ -123,10 +123,21 @@ def composecubemap(projs, m, out):
         for (j, p) in enumerate(projs):
             if j == 0:
                 img = p.imagefromgrid(gr[i])
+            elif p == "dark_to_transparent":
+                buf = np.array(img)
+                M = buf[:, :, 0:3].max(axis=2)
+                buf[:, :, 0:3] += 255 - M[:, :, None]
+                trans = buf[:, :, 3].astype(np.float64)
+                trans *= M / 255
+                buf[:, :, 3] = trans.astype(np.uint8)
+                img = Image.fromarray(buf, 'RGBA')
+   
             else:
                 tmp = p.imagefromgrid(gr[i])
                 img.alpha_composite(tmp)
                 #img.paste(tmp, mask=tmp)
+        
+        # dark to transparent
         img.save(out % i)
 
 def cut_out_disc(im, radius=1):
@@ -137,7 +148,7 @@ def cut_out_disc(im, radius=1):
     r = (y**2 + x**2) ** 0.5
     #buf[r > radius, -1] = 0
     mask = np.clip((radius - r) / radius, 0, 1)
-    mask = 255 * mask
+    mask = 255 * mask**(1/3)
     # atashi iya ne
     #mask[r > radius] = 0
     #mask[r <= radius] = 255 * ((radius - r[r <= radius]) / radius) ** 0.2
@@ -166,7 +177,7 @@ if __name__ == "__main__":
             disk_on_sphere(disc[1], 135 - 90),
             disk_on_sphere(disc[2], -140.7 - 90),
             disk_on_sphere(disc[3], -41.5 - 90)
-            #disk_on_sphere(disc[0], 0)
+            , "dark_to_transparent"#disk_on_sphere(disc[0], 0)
             #disk_on_sphere(disc[0], np.pi / 2),
             #disk_on_sphere(disc[1], +1)
         ]

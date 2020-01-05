@@ -2,11 +2,11 @@ programs:
 
 stitch.py
 
-- generates the files satellite-goes-east.png, satellite-goes-west.png, satellite-himawaris.png, satellite-meteosat8.png
+- downloads tiles from an internet place and stitches them together into satellite images
 
 cubist.py
 
-- generates the cubemaps from those files
+- generates the cubemaps from those images
 
 sphere.py
 
