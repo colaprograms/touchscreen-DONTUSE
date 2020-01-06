@@ -2,6 +2,9 @@ from PIL import Image
 from projec import convert
 import math
 import numpy as np
+import time
+import ephem
+import datetime
 
 Image.MAX_IMAGE_PIXELS = 300000000
 
@@ -62,8 +65,37 @@ class cybermercator (sphereimage):
         lat = np.remainder(z[:, :], 0.02)
         pix[lat < 0.005] = [0, 20, 0]
         return Image.fromarray(pix, self.img.mode)
+
+class darkearth (sphereimage):
+    """Shades the part of the earth opposite the sun by half."""
+    def __init__(self, time):
+        self.sun = ephem.Sun()
+        self.observer = ephem.Observer()
+        self.observer.lon = "90"
+        self.observer.date = datetime.datetime.fromtimestamp(time)
+        self.sun.compute(self.observer)
+        az, alt = self.sun.az, self.sun.alt
+        azs, azc = np.sin(az), np.cos(az)
+        alts, altc = np.sin(alt), np.cos(alt)
+        # i think maybe the x should be minus?
+        self.vec = np.array([-azs * altc, alts, azc * altc])
+        print("direction of sun:", self.vec)
         
+    def get_pixel(self, x, y, z):
+        x, y, z = convert.pt_to_sphere(x, y, z)
+        out = x * self.vec[0] + y * self.vec[1] + z * self.vec[2]
+        #print(np.min(out), np.max(out))
+        buf = np.zeros(out.shape + (4,), dtype=np.uint8)
+        tra = 191 * (1 - out) ** 9
+        tra = np.clip(tra, 0, 191)
+        buf[..., 3] = tra.astype(np.uint8)
+        return buf
     
+    def imagefromgrid(self, g):
+        g = np.transpose(g, (1, 0, 2)) # y, x, xyz
+        pix = self.get_pixel(g[:, :, 0], g[:, :, 1], g[:, :, 2])
+        return Image.fromarray(pix, "RGBA")
+        
 class disk_on_sphere (sphereimage):
     def __init__(self, img, degre):
         super().__init__(img)
@@ -134,9 +166,10 @@ def composecubemap(projs, m, out):
    
             else:
                 tmp = p.imagefromgrid(gr[i])
+                if img.mode == "RGB" and tmp.mode == "RGBA":
+                    img = img.convert("RGBA")
                 img.alpha_composite(tmp)
-                #img.paste(tmp, mask=tmp)
-        
+                
         # dark to transparent
         img.save(out % i)
 
@@ -155,14 +188,38 @@ def cut_out_disc(im, radius=1):
     buf[..., -1] = mask.astype(np.int)
     return Image.fromarray(buf, 'RGBA')
 
+def makeregular():
+    imgs = "satellite.png",
+    projs = [mercator_on_sphere(Image.open(_)) for _ in imgs]
+    composecubemap(projs, 1024, "satellite-%d.png")
+
+def makedynamic():
+    imgs = (
+        ("satellite-goes-east.png", 1),
+        ("satellite-goes-west.png", 1),
+        ("satellite-himawaris.png", 0.9803),
+        ("satellite-meteosat8.png", 0.9692)
+    )
+    disc = [cut_out_disc(Image.open(a), b) for (a, b) in imgs]
+    projs = [
+        disk_on_sphere(disc[0], 75 - 90),
+        disk_on_sphere(disc[1], 135 - 90),
+        disk_on_sphere(disc[2], -140.7 - 90),
+        disk_on_sphere(disc[3], -41.5 - 90)
+        , "dark_to_transparent"#disk_on_sphere(disc[0], 0)
+        #disk_on_sphere(disc[0], np.pi / 2),
+        #disk_on_sphere(disc[1], +1)
+    ]
+    composecubemap(projs, 1024, "satellite-goes-%d.png")
+
+"""
 if __name__ == "__main__":
     print("Make regular cubemap? [y/N] ", end="")
     if input().strip() in ["y", "yes"]:
         imgs = "satellite.png",
         projs = [mercator_on_sphere(Image.open(_)) for _ in imgs]
         composecubemap(projs, 1024, "satellite-%d.png")
-        #composecubemap(projs, 512, "satellite-%d.png") # whee
-    
+        
     print("Make GOES? [y/N] ", end="")
     if input().strip() in ["y", "yes"]:
         imgs = (
@@ -181,7 +238,19 @@ if __name__ == "__main__":
             #disk_on_sphere(disc[0], np.pi / 2),
             #disk_on_sphere(disc[1], +1)
         ]
-        composecubemap(projs, 512, "satellite-goes-%d.png")
+        composecubemap(projs, 1024, "satellite-goes-%d.png")
     
+    pass
+"""
+
+
+if __name__ == "__main__":
+    print("Make regular cubemap? [y/N] ", end="")
+    if input().strip() in ["y", "yes"]:
+        makeregular()
+        
+    print("Make GOES? [y/N] ", end="")
+    if input().strip() in ["y", "yes"]:
+        makedynamic()
     pass
     

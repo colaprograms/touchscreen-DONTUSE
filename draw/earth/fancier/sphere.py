@@ -156,6 +156,7 @@ class planet:
         self.cube = []
         for (j, side) in enumerate(roundedplate.sides.keys()):
             self.textures.append( maketexture("satellite-%d.png" % j) )
+            #self.textures.append( maketexture("black.png") )
             self.overlays.append( maketexture("satellite-goes-%d.png" % j) )
             #te = maketexture("satellite-%d.png" % j)
             #t2 = maketexture("satellite-goes-%d.png" % j)
@@ -167,7 +168,7 @@ class planet:
  
         self.texture()
         
-        planet.setScale(1/2) # iya
+        planet.setScale(0.9) #planet.setScale(0.95) #planet.setScale(1/2) # iya
         planet.setMaterial(material)
         self.nodePath = planet
     
@@ -199,7 +200,7 @@ class plight:
         ambi.setColor((0.4, 0.4, 0.4, 1))
         
         spotNP = render.attachNewNode(spot)
-        spotNP.setPos(-1, -2, 1)
+        spotNP.setPos(-2, -4, 2)
         #spotNP.setPos(-1, -2, 0)
         spotNP.lookAt(0, 0, 0)
         

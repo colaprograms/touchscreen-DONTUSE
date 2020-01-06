@@ -121,7 +121,6 @@ class disk:
                 return
         except FileNotFoundError:
             pass
-        open(filename + ".last-updated", "w").write("%s" % last)
         
         url = img % (last[:8], last)
         
@@ -135,6 +134,9 @@ class disk:
         z.get(url, callback=callback)
         #z.img.save(filename)
         z.save(filename) # atashi iya ne
+        
+        open(filename + ".last-updated", "w").write("%s" % last)
+        
         print("")
     
     @staticmethod
